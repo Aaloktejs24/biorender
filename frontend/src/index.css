@@ -1,0 +1,32 @@
+/* stylelint-disable */
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0c0c0e;
+  --color-surface: #1a1a1f;
+  --color-primary: #6366f1;
+  --color-secondary: #a855f7;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-background);
+  color: white;
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Base custom classes */
+.glass {
+  background-color: rgb(26 26 31 / 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-all active:scale-95 disabled:opacity-50;
+}
