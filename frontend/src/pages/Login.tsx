@@ -10,11 +10,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Diagnostic check
+  // Render Diagnostic
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    console.error('❌ VITE_GOOGLE_CLIENT_ID is missing from environment variables!');
-  }
 
   const handleSuccess = async (credentialResponse: any) => {
     console.log('🌟 Google Login Success, received credential');
@@ -75,8 +72,31 @@ const Login = () => {
           )}
           
           {error && (
-            <p className="text-red-400 text-sm font-medium">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl w-full">
+              <p className="text-red-400 text-xs font-medium text-center">{error}</p>
+            </div>
           )}
+
+          {/* Debug Panel (Only visible if something might be wrong) */}
+          <div className="mt-8 p-4 bg-white/5 rounded-2xl w-full border border-white/5">
+            <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">Deployment Debugger</h4>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-white/30">Client ID:</span>
+                <span className={clientId ? "text-green-500" : "text-red-500"}>
+                  {clientId 
+                    ? `${clientId.substring(0, 10)}...${clientId.substring(clientId.length - 10)}` 
+                    : "❌ Missing"}
+                </span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-white/30">API URL:</span>
+                <span className="text-white/60 truncate max-w-[150px]">
+                  {import.meta.env.VITE_API_URL || "Localhost (Default)"}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <p className="text-[10px] text-center text-white/20 mt-8">
