@@ -3,18 +3,22 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
-const connectDB = require('./config/db');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Connect to Database
-connectDB();
+// --- IN-MEMORY DATABASE (EPHEMERAL) ---
+// Global objects to store data during server runtime
+global.db = {
+  users: [],
+  projects: []
+};
+console.log('⚡ Running in In-Memory Mode (No MongoDB required)');
 
 // Middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for easier development/deployment of this specific app
+  contentSecurityPolicy: false,
 }));
 app.use(cors());
 app.use(morgan('dev'));
@@ -26,7 +30,7 @@ app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({ status: 'healthy', mode: 'in-memory', timestamp: new Date().toISOString() });
 });
 
 // Serve frontend in production

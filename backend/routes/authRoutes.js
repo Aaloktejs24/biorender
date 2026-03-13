@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const User = require('../models/User');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -10,58 +9,46 @@ router.post('/login', async (req, res) => {
   const { credential } = req.body;
   
   try {
-    // Verify the Google ID token
     const ticket = await client.verifyIdToken({
         idToken: credential,
         audience: process.env.GOOGLE_CLIENT_ID,
     });
     
     const payload = ticket.getPayload();
-    if (!payload) {
-        return res.status(400).json({ error: 'Invalid Google token' });
-    }
+    if (!payload) return res.status(400).json({ error: 'Invalid Google token' });
 
     const { sub: googleId, email, name, picture } = payload;
 
-    // Find or Create user in Database
-    let user = await User.findOne({ googleId });
+    // Use global.db instead of User model
+    let user = global.db.users.find(u => u.googleId === googleId);
 
     if (!user) {
-        user = await User.create({
+        user = {
+            id: Date.now().toString(), // Generate a fake ID
             googleId,
             email,
             name,
-            picture
-        });
-        console.log(`🆕 New user created: ${email}`);
+            picture,
+            role: 'user',
+            bio: ''
+        };
+        global.db.users.push(user);
+        console.log(`🆕 New user created (In-Memory): ${email}`);
     } else {
-        // Update profile picture if Google info changed, but keep their chosen display name
-        user.picture = picture;
-        await user.save();
-        console.log(`👤 Existing user logged in: ${email}`);
+        user.picture = picture; // Sync picture
+        console.log(`👤 Existing user logged in (In-Memory): ${email}`);
     }
 
-    // Generate our own local JWT for the session using database fields
     const token = jwt.sign(
-        { id: user._id, email: user.email, name: user.name }, 
+        { id: user.id, email: user.email, name: user.name }, 
         process.env.JWT_SECRET || 'fallback_secret', 
         { expiresIn: '1d' }
     );
     
-    res.json({ 
-        user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            picture: user.picture,
-            role: user.role,
-            bio: user.bio
-        }, 
-        token 
-    });
+    res.json({ user, token });
   } catch (error) {
-    console.error('❌ Google verification or DB save failed:', error.message, error.stack);
-    res.status(500).json({ error: 'Internal server error during authentication', detail: error.message });
+    console.error('❌ Auth failed:', error.message);
+    res.status(500).json({ error: 'Auth failed' });
   }
 });
 
