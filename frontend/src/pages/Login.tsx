@@ -10,22 +10,36 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Diagnostic check
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    console.error('❌ VITE_GOOGLE_CLIENT_ID is missing from environment variables!');
+  }
+
   const handleSuccess = async (credentialResponse: any) => {
+    console.log('🌟 Google Login Success, received credential');
     setIsLoading(true);
     setError(null);
     try {
+      console.log('📡 Sending credential to backend...');
       const response = await api.post('/auth/login', {
         credential: credentialResponse.credential
       });
       
+      console.log('✅ Backend verified login:', response.data);
       const { user, token } = response.data;
       login(user, token);
-    } catch (err) {
-      console.error('Login failed:', err);
-      setError('Authentication failed. Please try again.');
+    } catch (err: any) {
+      console.error('❌ Login Error:', err.response?.data || err.message);
+      setError(`Authentication failed: ${err.response?.data?.error || 'Server Error'}`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFailure = () => {
+    console.error('❌ Google Library Initialization/Login failed');
+    setError('Google Login failed. Check your internet or browser settings.');
   };
 
   return (
@@ -52,11 +66,10 @@ const Login = () => {
             <div className="w-full flex justify-center">
                <GoogleLogin
                 onSuccess={handleSuccess}
-                onError={() => setError('Google Login Failed')}
-                useOneTap
+                onError={handleFailure}
                 theme="filled_black"
                 shape="pill"
-                width="100%"
+                auto_select={false}
               />
             </div>
           )}
